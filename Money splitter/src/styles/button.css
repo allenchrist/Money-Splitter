@@ -1,0 +1,33 @@
+.button {
+    padding: 0.8rem 1.5rem;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+  }
+  
+  .default {
+    background: var(--primary-color);
+    background: #0056b3;
+    color:white;
+    border: none;
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+  }
+  
+  .default:hover {
+    background: #0056b3;
+    transform: translateY(-3px);
+  }
+  
+  .ghost {
+    background: #0056b3;
+    color: white;
+    border: 2px solid var(--primary-color);
+  }
+  
+  .ghost:hover {
+    background: var(--primary-color);
+    color: black;
+  }
+  

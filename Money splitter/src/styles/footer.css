@@ -1,0 +1,14 @@
+
+
+.home {
+    display: flex;
+    flex-direction: column;
+    
+    min-height: 100vh;  /* Ensures the page takes full viewport height */
+  }
+  
+  .footer {
+    text-align: center;
+    margin-top: auto;  /* Pushes the footer to the bottom */
+  }
+  
