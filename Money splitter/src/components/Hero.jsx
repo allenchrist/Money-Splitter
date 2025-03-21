@@ -34,7 +34,7 @@ export default function Hero() {
         <p className="hero-description">
           Manage group expenses, track payments, and settle balances seamlessly with Money Splitter.
         </p>
-        <Button variant="default" onClick={() => navigate("/create-group")}>
+        <Button variant="default" onClick={() => navigate("/login")}>
           Get Started
         </Button>
       </div>
