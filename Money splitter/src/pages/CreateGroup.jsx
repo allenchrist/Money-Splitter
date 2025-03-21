@@ -41,7 +41,7 @@ function CreateGroup() {
         { headers: { Authorization: token } }
       );
 
-      setGroups([...groups, res.data.group]); // Update groups state
+      setGroups([...groups, res.data.group]); // Update UI
       setGroupName("");
     } catch (error) {
       alert(error.response?.data?.message || "Error creating group");
@@ -54,14 +54,24 @@ function CreateGroup() {
     setMembers(group.members);
   };
 
-  // Add a member to the selected group
-  const addMember = () => {
+  // Add a member to the selected group and store it in MongoDB
+  const addMember = async () => {
     if (!selectedGroup) return alert("Select a group first!");
     if (!memberName.trim()) return alert("Enter a member name");
-    const updatedMembers = [...members, { id: Date.now(), name: memberName, amountDue: 0 }];
-    setMembers(updatedMembers);
-    selectedGroup.members = updatedMembers;
-    setMemberName("");
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        "http://localhost:5000/api/group/add-member",
+        { groupId: selectedGroup._id, memberName },
+        { headers: { Authorization: token } }
+      );
+
+      setMembers(res.data.group.members); // Update UI
+      setMemberName("");
+    } catch (error) {
+      alert(error.response?.data?.message || "Error adding member");
+    }
   };
 
   // Split an expense equally among members
@@ -112,7 +122,7 @@ function CreateGroup() {
       <div className="card p-3 mb-4">
         <h4>Your Groups</h4>
         {groups.map((group) => (
-          <button key={group.id} className="btn btn-outline-dark w-100 mb-2" onClick={() => selectGroup(group)}>
+          <button key={group._id} className="btn btn-outline-dark w-100 mb-2" onClick={() => selectGroup(group)}>
             {group.name}
           </button>
         ))}
@@ -138,7 +148,7 @@ function CreateGroup() {
           {/* Members List */}
           <h5>Members</h5>
           {members.map((member) => (
-            <div key={member.id} className="d-flex justify-content-between align-items-center border p-2 mb-2">
+            <div key={member._id} className="d-flex justify-content-between align-items-center border p-2 mb-2">
               <div>
                 <strong>{member.name}</strong> - ₹{member.amountDue.toFixed(2)}
               </div>
@@ -147,10 +157,10 @@ function CreateGroup() {
                   type="number"
                   className="form-control"
                   placeholder="Amount"
-                  value={payments[member.id] || ""}
-                  onChange={(e) => setPayments({ ...payments, [member.id]: e.target.value })}
+                  value={payments[member._id] || ""}
+                  onChange={(e) => setPayments({ ...payments, [member._id]: e.target.value })}
                 />
-                <button className="btn btn-warning" onClick={() => handlePayment(member.id, payments[member.id])}>
+                <button className="btn btn-warning" onClick={() => handlePayment(member._id, payments[member._id])}>
                   Pay
                 </button>
               </div>
