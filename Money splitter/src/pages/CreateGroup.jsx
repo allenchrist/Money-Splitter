@@ -16,32 +16,21 @@ function CreateGroup() {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/group/my-groups", {
-          headers: { Authorization: token },
-        });
+        const res = await axios.get("http://localhost:5000/api/group/my-groups");
         setGroups(res.data);
       } catch (error) {
         console.error("Error fetching groups:", error);
       }
     };
-
     fetchGroups();
   }, []);
 
-  // Create a new group and store it in the database
+  // Create a new group
   const createGroup = async () => {
     if (!groupName.trim()) return alert("Enter a group name");
-
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "http://localhost:5000/api/group/create",
-        { groupName },
-        { headers: { Authorization: token } }
-      );
-
-      setGroups([...groups, res.data.group]); // Update UI
+      const res = await axios.post("http://localhost:5000/api/group/create", { groupName });
+      setGroups([...groups, res.data.group]);
       setGroupName("");
     } catch (error) {
       alert(error.response?.data?.message || "Error creating group");
@@ -54,51 +43,60 @@ function CreateGroup() {
     setMembers(group.members);
   };
 
-  // Add a member to the selected group and store it in MongoDB
+  // Add a member
   const addMember = async () => {
     if (!selectedGroup) return alert("Select a group first!");
     if (!memberName.trim()) return alert("Enter a member name");
-
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "http://localhost:5000/api/group/add-member",
-        { groupId: selectedGroup._id, memberName },
-        { headers: { Authorization: token } }
-      );
-
-      setMembers(res.data.group.members); // Update UI
+      const res = await axios.post("http://localhost:5000/api/group/add-member", {
+        groupId: selectedGroup._id,
+        memberName,
+      });
+      setMembers(res.data.group.members);
       setMemberName("");
     } catch (error) {
       alert(error.response?.data?.message || "Error adding member");
     }
   };
 
-  // Split an expense equally among members
-  const addExpense = () => {
+  // Add Expense (Splitting)
+  const addExpense = async () => {
     if (!selectedGroup) return alert("Select a group first!");
     if (!amount || isNaN(amount) || amount <= 0) return alert("Enter a valid amount");
-    const splitAmount = parseFloat(amount) / members.length;
-    const updatedMembers = members.map((member) => ({
-      ...member,
-      amountDue: member.amountDue + splitAmount,
-    }));
-    setMembers(updatedMembers);
-    selectedGroup.members = updatedMembers;
-    setAmount("");
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/group/add-expense", {
+        groupId: selectedGroup._id,
+        amount: parseFloat(amount),
+      });
+
+      setMembers(res.data.group.members); // Update UI
+      setAmount("");
+      alert("Expense added successfully!");
+    } catch (error) {
+      alert(error.response?.data?.message || "Error adding expense");
+    }
   };
 
-  // Handle payment
-  const handlePayment = (memberId, paidAmount) => {
+  const handlePayment = async (memberName, paidAmount) => {
+    if (!selectedGroup) return alert("Select a group first!");
     if (!paidAmount || isNaN(paidAmount) || paidAmount <= 0) return alert("Enter a valid amount");
-    const updatedMembers = members.map((member) =>
-      member.id === memberId
-        ? { ...member, amountDue: Math.max(0, member.amountDue - parseFloat(paidAmount)) }
-        : member
-    );
-    setMembers(updatedMembers);
-    setPayments({ ...payments, [memberId]: "" });
+  
+    try {
+      const res = await axios.put("http://localhost:5000/api/group/pay-amount", {
+        groupId: selectedGroup._id,
+        memberName,
+        amount: parseFloat(paidAmount), // Fixed: Now using the variable correctly.
+      });
+  
+      setMembers(res.data.group.members); // Update UI
+      setPayments({ ...payments, [memberName]: "" });
+      alert("Payment successful!");
+    } catch (error) {
+      alert(error.response?.data?.message || "Error processing payment");
+    }
   };
+  
 
   return (
     <div className="container py-4">
@@ -114,7 +112,9 @@ function CreateGroup() {
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
           />
-          <button className="btn btn-primary" onClick={createGroup}>Create</button>
+          <button className="btn btn-primary" onClick={createGroup}>
+            Create
+          </button>
         </div>
       </div>
 
@@ -122,7 +122,11 @@ function CreateGroup() {
       <div className="card p-3 mb-4">
         <h4>Your Groups</h4>
         {groups.map((group) => (
-          <button key={group._id} className="btn btn-outline-dark w-100 mb-2" onClick={() => selectGroup(group)}>
+          <button
+            key={group._id}
+            className="btn btn-outline-dark w-100 mb-2"
+            onClick={() => selectGroup(group)}
+          >
             {group.name}
           </button>
         ))}
@@ -142,13 +146,18 @@ function CreateGroup() {
               value={memberName}
               onChange={(e) => setMemberName(e.target.value)}
             />
-            <button className="btn btn-success" onClick={addMember}>Add</button>
+            <button className="btn btn-success" onClick={addMember}>
+              Add
+            </button>
           </div>
 
           {/* Members List */}
           <h5>Members</h5>
           {members.map((member) => (
-            <div key={member._id} className="d-flex justify-content-between align-items-center border p-2 mb-2">
+            <div
+              key={member._id}
+              className="d-flex justify-content-between align-items-center border p-2 mb-2"
+            >
               <div>
                 <strong>{member.name}</strong> - ₹{member.amountDue.toFixed(2)}
               </div>
@@ -157,10 +166,15 @@ function CreateGroup() {
                   type="number"
                   className="form-control"
                   placeholder="Amount"
-                  value={payments[member._id] || ""}
-                  onChange={(e) => setPayments({ ...payments, [member._id]: e.target.value })}
+                  value={payments[member.name] || ""}
+                  onChange={(e) =>
+                    setPayments({ ...payments, [member.name]: e.target.value })
+                  }
                 />
-                <button className="btn btn-warning" onClick={() => handlePayment(member._id, payments[member._id])}>
+                <button
+                  className="btn btn-warning"
+                  onClick={() => handlePayment(member.name, payments[member.name])}
+                >
                   Pay
                 </button>
               </div>
@@ -177,7 +191,9 @@ function CreateGroup() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-            <button className="btn btn-danger" onClick={addExpense}>Split</button>
+            <button className="btn btn-danger" onClick={addExpense}>
+              Split
+            </button>
           </div>
         </div>
       )}

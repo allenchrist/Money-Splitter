@@ -7,6 +7,7 @@ dotenv.config(); // Load environment variables
 
 const app = express(); // Initialize Express app
 
+
 // Middleware
 app.use(express.json());
 app.use(cors());
@@ -18,6 +19,7 @@ const groupRoutes = require("./routes/groupRoutes");
 // Use Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/group", groupRoutes);
+
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/money_splitter", {
