@@ -86,16 +86,18 @@ function CreateGroup() {
       const res = await axios.put("http://localhost:5000/api/group/pay-amount", {
         groupId: selectedGroup._id,
         memberName,
-        amount: parseFloat(paidAmount), // Fixed: Now using the variable correctly.
+        amount: parseFloat(paidAmount), // ✅ Fixed the variable
       });
   
       setMembers(res.data.group.members); // Update UI
       setPayments({ ...payments, [memberName]: "" });
       alert("Payment successful!");
     } catch (error) {
+      console.error("Payment error:", error);
       alert(error.response?.data?.message || "Error processing payment");
     }
   };
+  
   
 
   return (
