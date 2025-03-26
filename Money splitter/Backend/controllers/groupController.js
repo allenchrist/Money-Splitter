@@ -1,41 +1,59 @@
 const Group = require("../models/group");
-//const mongoose = require("mongoose");
-// Create a new group
+
+// 🆕 Create Group with Password
 exports.createGroup = async (req, res) => {
   try {
-    const { groupName } = req.body;
-    if (!groupName) return res.status(400).json({ message: "Group name is required" });
+    const { groupName, password } = req.body;
+    if (!groupName || !password) {
+      return res.status(400).json({ message: "Group name and password are required!" });
+    }
 
-    const newGroup = new Group({ name: groupName, members: [] });
+    const newGroup = new Group({ name: groupName, password, members: [] });
     await newGroup.save();
 
-    res.status(201).json({ message: "Group created successfully", group: newGroup });
+    res.status(201).json({ message: "Group created successfully!", group: newGroup });
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
 };
 
-// Get all groups
+// 🔐 Fetch Group with Password
+exports.getGroup = async (req, res) => {
+  try {
+    const { groupName, password } = req.body;
+
+    const group = await Group.findOne({ name: groupName });
+
+    if (!group) {
+      return res.status(404).json({ message: "Group not found!" });
+    }
+
+    const isMatch = await group.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password!" });
+    }
+
+    res.status(200).json(group);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// 🏷️ Get All Groups (Without Password Check)
 exports.getMyGroups = async (req, res) => {
   try {
-    const groups = await Group.find();
+    const groups = await Group.find().select("name members");
     res.json(groups);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
 };
 
-// Add a member to a group
-const mongoose = require("mongoose");
-
+// ➕ Add a Member to a Group
 exports.addMember = async (req, res) => {
   try {
     const { groupId, memberName } = req.body;
-
-    // Check if groupId is a valid MongoDB ObjectId
-    if (!mongoose.Types.ObjectId.isValid(groupId)) {
-      return res.status(400).json({ message: "Invalid group ID" });
-    }
+    if (!groupId || !memberName) return res.status(400).json({ message: "Invalid input" });
 
     const group = await Group.findById(groupId);
     if (!group) return res.status(404).json({ message: "Group not found" });
@@ -48,12 +66,13 @@ exports.addMember = async (req, res) => {
     res.status(500).json({ message: "Server error", error });
   }
 };
+
+// 💰 Add Expense and Split Among Members
 exports.addExpense = async (req, res) => {
   try {
     const { groupId, amount } = req.body;
-
     if (!groupId || !amount || isNaN(amount) || amount <= 0) {
-      return res.status(400).json({ message: "Invalid group ID or amount" });
+      return res.status(400).json({ message: "Invalid input" });
     }
 
     const group = await Group.findById(groupId);
@@ -75,7 +94,7 @@ exports.addExpense = async (req, res) => {
   }
 };
 
-// Pay amount and reduce balance
+// ✅ Pay Amount and Reduce Balance
 exports.payAmount = async (req, res) => {
   try {
     const { groupId, memberName, amount } = req.body;
@@ -93,11 +112,8 @@ exports.payAmount = async (req, res) => {
     member.amountDue = Math.max(0, member.amountDue - amount);
     await group.save();
 
-    console.log(`Payment successful: ${memberName} paid ${amount} in group ${groupId}`);
-
     res.status(200).json({ message: "Payment successful", group });
   } catch (error) {
-    console.error("Error processing payment:", error);
     res.status(500).json({ message: "Server error", error });
   }
 };

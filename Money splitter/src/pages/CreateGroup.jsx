@@ -5,8 +5,10 @@ import "../styles/createGroup.css";
 
 function CreateGroup() {
   const [groupName, setGroupName] = useState("");
+  const [password, setPassword] = useState(""); // 🆕 Password field
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [enteredPassword, setEnteredPassword] = useState(""); // 🆕 For verifying password
   const [memberName, setMemberName] = useState("");
   const [amount, setAmount] = useState("");
   const [members, setMembers] = useState([]);
@@ -27,20 +29,38 @@ function CreateGroup() {
 
   // Create a new group
   const createGroup = async () => {
-    if (!groupName.trim()) return alert("Enter a group name");
+    if (!groupName.trim() || !password.trim()) return alert("Enter group name and password");
     try {
-      const res = await axios.post("http://localhost:5000/api/group/create", { groupName });
+      const res = await axios.post("http://localhost:5000/api/group/create", {
+        groupName,
+        password, // 🆕 Sending password
+      });
+
       setGroups([...groups, res.data.group]);
       setGroupName("");
+      setPassword(""); // 🆕 Clear password field
     } catch (error) {
       alert(error.response?.data?.message || "Error creating group");
     }
   };
 
-  // Select a group
-  const selectGroup = (group) => {
-    setSelectedGroup(group);
-    setMembers(group.members);
+  // Select a group (Require password)
+  const selectGroup = async (group) => {
+    const enteredPass = prompt(`Enter password for ${group.name}:`); // 🆕 Ask for password
+    if (!enteredPass) return;
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/group/get", {
+        groupName: group.name,
+        password: enteredPass, // 🆕 Verify password before accessing
+      });
+
+      setSelectedGroup(res.data);
+      setMembers(res.data.members);
+      setEnteredPassword(""); // 🆕 Clear entered password
+    } catch (error) {
+      alert(error.response?.data?.message || "Incorrect password!");
+    }
   };
 
   // Add a member
@@ -70,7 +90,7 @@ function CreateGroup() {
         amount: parseFloat(amount),
       });
 
-      setMembers(res.data.group.members); // Update UI
+      setMembers(res.data.group.members);
       setAmount("");
       alert("Expense added successfully!");
     } catch (error) {
@@ -78,18 +98,19 @@ function CreateGroup() {
     }
   };
 
+  // Handle Payments
   const handlePayment = async (memberName, paidAmount) => {
     if (!selectedGroup) return alert("Select a group first!");
     if (!paidAmount || isNaN(paidAmount) || paidAmount <= 0) return alert("Enter a valid amount");
-  
+
     try {
       const res = await axios.put("http://localhost:5000/api/group/pay-amount", {
         groupId: selectedGroup._id,
         memberName,
-        amount: parseFloat(paidAmount), // ✅ Fixed the variable
+        amount: parseFloat(paidAmount),
       });
-  
-      setMembers(res.data.group.members); // Update UI
+
+      setMembers(res.data.group.members);
       setPayments({ ...payments, [memberName]: "" });
       alert("Payment successful!");
     } catch (error) {
@@ -97,8 +118,6 @@ function CreateGroup() {
       alert(error.response?.data?.message || "Error processing payment");
     }
   };
-  
-  
 
   return (
     <div className="container py-4">
@@ -113,6 +132,13 @@ function CreateGroup() {
             placeholder="Enter group name"
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
+          />
+          <input
+            type="password"
+            className="form-control"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
           <button className="btn btn-primary" onClick={createGroup}>
             Create

@@ -37,6 +37,9 @@ export default function Login() {
           <input type="password" name="password" placeholder="Password" onChange={handleChange} required style={styles.input} />
           <button type="submit" style={styles.button}>Login</button>
         </form>
+        <p style={styles.linkText}>
+          Don't have an account? <span onClick={() => navigate("/signup")} style={styles.link}>Sign up</span>
+        </p>
       </div>
     </div>
   );
@@ -51,7 +54,7 @@ const styles = {
     backgroundColor: "#f8f9fa",
   },
   card: {
-    width: "450px", // Same width as the signup card
+    width: "450px",
     padding: "40px",
     borderRadius: "12px",
     boxShadow: "0 10px 20px rgba(0, 0, 0, 0.1)",
@@ -88,5 +91,14 @@ const styles = {
     fontWeight: "bold",
     cursor: "pointer",
     transition: "0.3s",
+  },
+  linkText: {
+    marginTop: "15px",
+    fontSize: "14px",
+  },
+  link: {
+    color: "#007bff",
+    cursor: "pointer",
+    textDecoration: "underline",
   },
 };

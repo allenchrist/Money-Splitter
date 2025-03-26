@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import navigate hook
 import axios from "axios";
 
 export default function Signup() {
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const navigate = useNavigate(); // Initialize navigate
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -11,11 +13,12 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/signup", formData, {
+      await axios.post("http://localhost:5000/api/auth/signup", formData, {
         headers: { "Content-Type": "application/json" },
       });
 
       alert("Signup successful! Please log in.");
+      navigate("/login"); // Redirect to login page after signup
     } catch (error) {
       alert(error.response?.data?.message || "Signup failed!");
     }
@@ -31,6 +34,9 @@ export default function Signup() {
           <input type="password" name="password" placeholder="Password" onChange={handleChange} required style={styles.input} />
           <button type="submit" style={styles.button}>Sign Up</button>
         </form>
+        <p style={styles.linkText}>
+          Already have an account? <span onClick={() => navigate("/login")} style={styles.link}>Login</span>
+        </p>
       </div>
     </div>
   );
@@ -45,7 +51,7 @@ const styles = {
     backgroundColor: "#f8f9fa",
   },
   card: {
-    width: "450px", // Increased width
+    width: "450px",
     padding: "40px",
     borderRadius: "12px",
     boxShadow: "0 10px 20px rgba(0, 0, 0, 0.1)",
@@ -82,5 +88,14 @@ const styles = {
     fontWeight: "bold",
     cursor: "pointer",
     transition: "0.3s",
+  },
+  linkText: {
+    marginTop: "15px",
+    fontSize: "14px",
+  },
+  link: {
+    color: "#007bff",
+    cursor: "pointer",
+    textDecoration: "underline",
   },
 };
