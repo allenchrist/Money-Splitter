@@ -1,5 +1,5 @@
 import { useState } from "react";
- import Navbar from "../components/Navbar";
+//import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import "../styles/contact.css";
 
@@ -10,18 +10,39 @@ export default function Contact() {
     message: "",
   });
 
+  const [status, setStatus] = useState(""); // To show success or error messages
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setStatus("Message sent successfully! ✅");
+        setFormData({ name: "", email: "", message: "" }); // Clear form
+      } else {
+        setStatus("Failed to send message. ❌");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setStatus("An error occurred. Try again later. ⚠️");
+    }
   };
 
   return (
     <div className="contact-page">
-      {/* <Navbar /> */}
+      
       <section className="contact-hero">
         <h1>Contact Us</h1>
         <p>We’d love to hear from you! Reach out for any queries or feedback.</p>
@@ -60,9 +81,11 @@ export default function Contact() {
 
           <button type="submit">Send Message</button>
         </form>
+
+        {status && <p className="status-message">{status}</p>} {/* Display status */}
       </section>
 
-      <Footer />
+      
     </div>
   );
 }

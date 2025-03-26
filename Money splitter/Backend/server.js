@@ -15,11 +15,11 @@ app.use(cors());
 // Import Routes
 const authRoutes = require("./routes/authRoutes");
 const groupRoutes = require("./routes/groupRoutes");
-
+const contactRoutes = require("./routes/contactRoutes");
 // Use Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/group", groupRoutes);
-
+app.use("/api/contact", contactRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/money_splitter", {
