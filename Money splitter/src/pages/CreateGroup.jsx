@@ -5,16 +5,15 @@ import "../styles/createGroup.css";
 
 function CreateGroup() {
   const [groupName, setGroupName] = useState("");
-  const [password, setPassword] = useState(""); // 🆕 Password field
+  const [password, setPassword] = useState("");
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [enteredPassword, setEnteredPassword] = useState(""); // 🆕 For verifying password
   const [memberName, setMemberName] = useState("");
   const [amount, setAmount] = useState("");
   const [members, setMembers] = useState([]);
   const [payments, setPayments] = useState({});
 
-  // Fetch groups from the database when the component mounts
+  // Fetch groups
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -27,44 +26,42 @@ function CreateGroup() {
     fetchGroups();
   }, []);
 
-  // Create a new group
-  const createGroup = async () => {
-    if (!groupName.trim() || !password.trim()) return alert("Enter group name and password");
+  // Create a new group with password
+  const createGroupHandler = async () => {
+    if (!groupName.trim() || !password.trim()) {
+      return alert("Enter group name and password");
+    }
     try {
       const res = await axios.post("http://localhost:5000/api/group/create", {
         groupName,
-        password, // 🆕 Sending password
+        password,
       });
-
       setGroups([...groups, res.data.group]);
       setGroupName("");
-      setPassword(""); // 🆕 Clear password field
+      setPassword("");
     } catch (error) {
       alert(error.response?.data?.message || "Error creating group");
     }
   };
 
-  // Select a group (Require password)
+  // Select group (password verification)
   const selectGroup = async (group) => {
-    const enteredPass = prompt(`Enter password for ${group.name}:`); // 🆕 Ask for password
+    const enteredPass = prompt(`Enter password for ${group.name}:`);
     if (!enteredPass) return;
-
     try {
       const res = await axios.post("http://localhost:5000/api/group/get", {
         groupName: group.name,
-        password: enteredPass, // 🆕 Verify password before accessing
+        password: enteredPass,
       });
-
       setSelectedGroup(res.data);
       setMembers(res.data.members);
-      setEnteredPassword(""); // 🆕 Clear entered password
     } catch (error) {
       alert(error.response?.data?.message || "Incorrect password!");
     }
   };
 
   // Add a member
-  const addMember = async () => {
+  const addMemberHandler = async () => {
     if (!selectedGroup) return alert("Select a group first!");
     if (!memberName.trim()) return alert("Enter a member name");
     try {
@@ -79,17 +76,15 @@ function CreateGroup() {
     }
   };
 
-  // Add Expense (Splitting)
-  const addExpense = async () => {
+  // Add expense
+  const addExpenseHandler = async () => {
     if (!selectedGroup) return alert("Select a group first!");
     if (!amount || isNaN(amount) || amount <= 0) return alert("Enter a valid amount");
-
     try {
       const res = await axios.post("http://localhost:5000/api/group/add-expense", {
         groupId: selectedGroup._id,
         amount: parseFloat(amount),
       });
-
       setMembers(res.data.group.members);
       setAmount("");
       alert("Expense added successfully!");
@@ -98,18 +93,16 @@ function CreateGroup() {
     }
   };
 
-  // Handle Payments
+  // Handle payment
   const handlePayment = async (memberName, paidAmount) => {
     if (!selectedGroup) return alert("Select a group first!");
     if (!paidAmount || isNaN(paidAmount) || paidAmount <= 0) return alert("Enter a valid amount");
-
     try {
       const res = await axios.put("http://localhost:5000/api/group/pay-amount", {
         groupId: selectedGroup._id,
         memberName,
         amount: parseFloat(paidAmount),
       });
-
       setMembers(res.data.group.members);
       setPayments({ ...payments, [memberName]: "" });
       alert("Payment successful!");
@@ -121,110 +114,104 @@ function CreateGroup() {
 
   return (
     <div className="container py-4">
-      <h2 className="text-center mb-4">Create Group</h2>
+      <h2 className="text-center mb-4">💰 Create & Manage Groups</h2>
 
       {/* Create Group Form */}
-      <div className="card p-3 mb-4">
-        <div className="input-group">
+      <div className="card mb-4">
+        <h4>Create Group</h4>
+        <div className="input-group create-group-input">
           <input
             type="text"
             className="form-control"
-            placeholder="Enter group name"
+            placeholder="Group Name"
             value={groupName}
             onChange={(e) => setGroupName(e.target.value)}
           />
           <input
             type="password"
             className="form-control"
-            placeholder="Enter password"
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <button className="btn btn-primary" onClick={createGroup}>
+          <button className="btn btn-primary" onClick={createGroupHandler}>
             Create
           </button>
         </div>
       </div>
 
-      {/* Groups List */}
-      <div className="card p-3 mb-4">
-        <h4>Your Groups</h4>
+      {/* Groups List as a Grid */}
+      <div className="group-grid">
         {groups.map((group) => (
-          <button
-            key={group._id}
-            className="btn btn-outline-dark w-100 mb-2"
-            onClick={() => selectGroup(group)}
-          >
-            {group.name}
-          </button>
+          <div key={group._id} className="group-card">
+            <h5 className="group-card-title">{group.name}</h5>
+            <p className="group-card-text">{group.members.length} members</p>
+            <button className="btn btn-outline-dark w-100" onClick={() => selectGroup(group)}>
+              View Group
+            </button>
+
+            {/* If this group is selected, display details below */}
+            {selectedGroup && selectedGroup._id === group._id && (
+              <div className="group-details mt-3">
+                <div className="input-group my-3 add-member">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Enter member name"
+                    value={memberName}
+                    onChange={(e) => setMemberName(e.target.value)}
+                  />
+                  <button className="btn btn-success" onClick={addMemberHandler}>
+                    Add
+                  </button>
+                </div>
+
+                <h5>Members</h5>
+                {members.map((member) => (
+                  <div key={member._id} className="member-card">
+                    <div>
+                      <strong>{member.name}</strong> - ₹{member.amountDue.toFixed(2)}
+                    </div>
+                    <div className="input-group w-50">
+                      <input
+                        type="number"
+                        className="form-control"
+                        placeholder="Amount"
+                        value={payments[member.name] || ""}
+                        onChange={(e) =>
+                          setPayments({ ...payments, [member.name]: e.target.value })
+                        }
+                      />
+                      <button
+                        className="btn btn-warning"
+                        onClick={() => handlePayment(member.name, payments[member.name])}
+                      >
+                        Pay
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="expense-section">
+                  <h5 className="mt-4">Add Expense</h5>
+                  <div className="input-group">
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="Enter amount"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                    />
+                    <button className="btn btn-danger" onClick={addExpenseHandler}>
+                      Split
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         ))}
       </div>
-
-      {/* Group Details */}
-      {selectedGroup && (
-        <div className="card p-3">
-          <h4>Group: {selectedGroup.name}</h4>
-
-          {/* Add Member */}
-          <div className="input-group my-3">
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Enter member name"
-              value={memberName}
-              onChange={(e) => setMemberName(e.target.value)}
-            />
-            <button className="btn btn-success" onClick={addMember}>
-              Add
-            </button>
-          </div>
-
-          {/* Members List */}
-          <h5>Members</h5>
-          {members.map((member) => (
-            <div
-              key={member._id}
-              className="d-flex justify-content-between align-items-center border p-2 mb-2"
-            >
-              <div>
-                <strong>{member.name}</strong> - ₹{member.amountDue.toFixed(2)}
-              </div>
-              <div className="input-group w-50">
-                <input
-                  type="number"
-                  className="form-control"
-                  placeholder="Amount"
-                  value={payments[member.name] || ""}
-                  onChange={(e) =>
-                    setPayments({ ...payments, [member.name]: e.target.value })
-                  }
-                />
-                <button
-                  className="btn btn-warning"
-                  onClick={() => handlePayment(member.name, payments[member.name])}
-                >
-                  Pay
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {/* Add Expense */}
-          <h5 className="mt-4">Add Expense</h5>
-          <div className="input-group">
-            <input
-              type="number"
-              className="form-control"
-              placeholder="Enter amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
-            <button className="btn btn-danger" onClick={addExpense}>
-              Split
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

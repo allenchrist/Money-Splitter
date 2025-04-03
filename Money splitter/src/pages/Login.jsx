@@ -29,6 +29,8 @@ export default function Login() {
   };
 
   return (
+    
+  
     <div style={styles.container}>
       <div style={styles.card}>
         <h2 style={styles.heading}>Login</h2>
@@ -42,6 +44,7 @@ export default function Login() {
         </p>
       </div>
     </div>
+    
   );
 }
 
@@ -101,4 +104,6 @@ const styles = {
     cursor: "pointer",
     textDecoration: "underline",
   },
+  /* Apply background only to the login page */
+
 };
