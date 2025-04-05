@@ -1,0 +1,10 @@
+input, textarea {
+    color: white; /* Sets the text color to white */
+    background-color: black; /* Keeps the background black */
+    border: 1px solid grey; /* Optional: adds a border */
+  }
+  
+  input::placeholder, textarea::placeholder {
+    color: grey; /* Makes the placeholder text grey */
+  }
+  

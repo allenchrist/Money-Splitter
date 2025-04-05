@@ -5,7 +5,7 @@ import "../styles/navbar.css";
 export default function Navbar() {
   return (
     <nav className="navbar">
-      <h1  className="logo">💰 Money Splitter</h1>
+      <h1  className="logo">💰  Expense Splitter</h1>
       <div className="nav-links">
         <Link to="/">
           <Button variant="ghost">Home</Button>

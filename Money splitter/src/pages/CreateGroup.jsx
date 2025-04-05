@@ -118,7 +118,7 @@ function CreateGroup() {
 
       {/* Create Group Form */}
       <div className="card mb-4">
-        <h4>Create Group</h4>
+        <h4 >Create Group</h4>
         <div className="input-group create-group-input">
           <input
             type="text"

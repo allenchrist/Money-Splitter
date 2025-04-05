@@ -105,5 +105,6 @@ const styles = {
     textDecoration: "underline",
   },
   /* Apply background only to the login page */
+  
 
 };
